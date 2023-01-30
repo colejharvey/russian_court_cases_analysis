@@ -1,0 +1,18 @@
+---
+title: "Cleaning coded data"
+output: html_notebook
+---
+
+
+```{r setup}
+library(tidyverse)
+library(here)
+
+cases <- read.csv(here("Data", "cases1_100.csv"))
+```
+
+
+```{r}
+grouped_cases <- cases %>% select(-) %>% group_by(document_name) %>% mutate(across(Case.law..Civil:Type..First.instance, .fns = sum))
+```
+
