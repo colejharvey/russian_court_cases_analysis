@@ -13,6 +13,7 @@ cases <- read.csv(here("Data", "cases1_100.csv"))
 
 
 ```{r}
-grouped_cases <- cases %>% select(-) %>% group_by(document_name) %>% mutate(across(Case.law..Civil:Type..First.instance, .fns = sum))
+grouped_cases <- cases %>% select(!(MediaType:EX)) 
+grouped_cases <- grouped_cases %>% group_by(document_name) %>%  summarise(across(Case.law..Civil:Type..First.instance, sum))
 ```
 
