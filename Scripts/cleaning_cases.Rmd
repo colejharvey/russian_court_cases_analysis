@@ -7,13 +7,92 @@ output: html_notebook
 ```{r setup}
 library(tidyverse)
 library(here)
+library(readxl)
 
-cases <- read.csv(here("Data", "cases1_100.csv"))
+cases <- read_xlsx(here("Data", "Lawcode_142_1.xlsx"))
+cases <- cases %>% rename(document_name = "Document Name")
+
+case_info <- read_rds(here("Data", "combined_dataset.RDS")) %>% select(-decision.text)
+case_info <- case_info %>% mutate(document_name = paste0("caseid_", caseid))
+
+case_metadata <- read.csv(here("Data", "case_metadata_142_1.csv")) %>% rename(document_name = ï..document_name)
+
+regions_data <- read.xlsx(here::here("Maps", "russia_regions_map_data.xlsx"))
 ```
 
 
 ```{r}
 grouped_cases <- cases %>% select(!(MediaType:EX)) 
-grouped_cases <- grouped_cases %>% group_by(document_name) %>%  summarise(across(Case.law..Civil:Type..First.instance, sum))
+grouped_cases <- grouped_cases %>% group_by(document_name) %>%  summarise(across("Case law: Civil":"Type: First instance", sum))
 ```
+
+Making regions into column data rather than row
+
+```{r}
+grouped_cases2 <- grouped_cases %>% pivot_longer(
+  cols = starts_with("Region"),
+  names_to = "region"
+  )
+grouped_cases2 <- grouped_cases2 %>% filter(value == 1)
+grouped_cases2 <- grouped_cases2 %>% select(-value)
+```
+
+Some renaming
+
+```{r}
+grouped_cases2 <- grouped_cases2 %>% rename(penalty_fine = `Penalty: Fine`)
+```
+
+
+Merging case info with cases
+
+```{r}
+grouped_cases2 <- grouped_cases2 %>% inner_join(case_info, by = "document_name")
+```
+
+Cleaning some variables so that any code greater than 1 equals 1. 
+
+```{r}
+grouped_cases2 <- grouped_cases2 %>% mutate(across("Case law: Civil":"Type: First instance", ~ifelse(.x >= 1, 1, 0)))
+```
+
+Merging with metadata
+
+```{r}
+grouped_cases2 <- grouped_cases2 %>% inner_join(case_metadata, by = "document_name")
+```
+
+
+Quick plot of fines by year
+
+```{r}
+ggplot(data = grouped_cases2 %>% filter(penalty_fine == 1), aes(x=year, y=fine_amount, color = region)) +
+  geom_point(position = "jitter")
+```
+
+## For map of cases
+
+
+```{r}
+cases_by_region <- grouped_cases2 %>% group_by(region) %>% summarise(sum(n_defendants))
+write.csv(cases_by_region, here("Maps", "cases_by_region.csv"))
+```
+
+
+## Very quick analysis, cross-sectional
+
+```{r}
+m1 <- MASS::glm.nb(n_cases_142_1 ~ avg_fraudscore + comp.scale2012 + I(comp.scale2012^2), data = regions_data)
+
+m2 <- MASS::glm.nb(n_cases_142_1 ~ avg_fraudscore + comp.scale2012, data = regions_data)
+
+m3 <- MASS::glm.nb(n_cases_142_1 ~ avg_fraudscore, data = regions_data)
+
+```
+
+
+```{r}
+tab_model(list(m1, m2, m3))
+```
+
 

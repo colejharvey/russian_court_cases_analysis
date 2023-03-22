@@ -1,0 +1,64 @@
+---
+title: "Calculating Skovoroda and Lankina deviance measure for national elections"
+output: html_notebook
+---
+
+
+```{r setup}
+library(tidyverse)
+library(openxlsx)
+library(here)
+library(stringi)
+
+election_full <- read.xlsx(here("Data", "Election_data", "precinct_results_2011.xlsx"))
+
+```
+
+```{r}
+election_full <- election_full %>%                                        # Create ID by group
+  group_by(region) %>%
+  dplyr::mutate(temp_id = cur_group_id())
+
+```
+
+Get number of precincts
+
+```{r}
+precincts <- election_full %>% group_by(temp_id) %>% summarize(n())
+precincts <- precincts %>% rename(n_precincts = `n()`)
+```
+
+Get frequency of last-digit zeroes
+
+```{r}
+precincts <- precincts %>% add_column(ur_last0_freq = NA)
+precincts <- precincts %>% add_column(region = NA)
+
+election_full <- election_full %>% mutate(ur_last = united_russia %% 10)
+election_full <- election_full %>% mutate(kprf_last = kprf %% 10)
+
+for (i in 1:nrow(precincts)){
+  election_full_sub <- election_full %>% filter(temp_id == i)
+  temp_table_ur <- table(election_full_sub$ur_last)
+  precincts$ur_last0_freq[i] <- as.numeric(temp_table_ur[1]) / precincts$n_precincts[i]
+  precincts$region[i] <- unique(election_full_sub$region) %>% stri_trans_general(. , 'cyrillic-latin')
+}
+
+```
+
+
+##Skovoroda and Lankina formula for deviance of last-digit zero
+
+```{r}
+precincts$deviance_region <- 2*(precincts$ur_last0_freq*log(precincts$ur_last0_freq/(.1*precincts$n_precincts))) + (precincts$n_precincts- precincts$ur_last0_freq)*log((precincts$n_precincts - precincts$ur_last0_freq)/.9*precincts$n_precincts)
+```
+
+```{r}
+write.csv(precincts, here("Data", "region_deviance_2011.csv"))
+```
+
+```{r}
+deviance_region <- 2(observed_freq_zero*log(observed_freq_zero/(.1*n_precincts))) + (n_precincts- observed_freq_zero)*log((n_precincts - observed_freq_zero)/.9*n_precincts)
+```
+
+Next steps: collect deviance for opposition party too? Figure out best way to connect the collected deviances to the main dataset for this. It may be time to just come up with a new master ID list. But this is tricky because of different spellings for some of the regions across years in the big datasets.
