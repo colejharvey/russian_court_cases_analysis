@@ -1,0 +1,163 @@
+---
+title: "Election Manipulation Offenses in the Russian Legal System"
+subtitle: " Preliminary Findings"
+author: "Cole J. Harvey"
+institute: "Oklahoma State University"
+date: "2016/12/12 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(eval=T)
+library(cowplot)
+
+```
+
+
+
+
+
+# Election-manipulation and the courts
+
+.pull-left[
+```{r echo=FALSE}
+ggdraw() + 
+  draw_image(here::here("Drafts", "Moscow-Regional-Court.jpg"))
+```
+]
+
+.pull-right[
+```{r echo=FALSE}
+ggdraw() + 
+  draw_image(here::here("Drafts", "krasnodar_ballotstuffing_police.png"))
+```
+]
+
+
+---
+
+# Research question
+
+
+* Part descriptive:
+  + How does the Russian legal system handle election-manipulation cases?
+  
+* Part broadly theoretical:
+  + Does legal risk influence future election manipulation?
+  
+---
+
+# Preliminary findings
+
+* **How does the Russian legal system handle election-manipulation cases?**
+  + Routinely addresses election-manipulation issues through 2016
+  + Convictions very common
+  + Number of cases drops off dramatically after 2016
+  
+* **Does legal risk influence future election manipulation?**
+  + Major sentences associated with reduced fraud in next election
+  
+---
+
+# Overview of literature
+
+* Non-democracies have reasons to maintain a degree of judicial independence (Moustafa 2008, Whiting 2017, Ginsburg 2008, Rios-Figueroa 2018, Staton 2020)  -Update these with correct authors
+  + Legitimation
+  + Monitoring
+  + Low-level accountability
+
+* In Russia
+  + JP courts regularly rule against the state (Hendley 2017) 
+  + General perception that the courts are fair (Hendley 2016)
+
+* Nevertheless, lots of tools to intervene in specific cases (Ledeneva 2008, Llanos2016, Solomon2010, Popova 2012 Taylor 2014, Wang2020)
+
+* This combination works for the system and elites, but creates **risk** for low-level agents
+
+---
+
+# Three views of courts and election manipulation
+
+* Courts reveal information that may spark protest (Chernykh and Svolik 2015)
+
+* Pressure in competitive elections increases manipulation (Popova 2012)
+
+* Judicial system creates risks for agents (Harvey 2022), intensifying  principal-agent problems (Rundlett and Svolik 2016)
+
+---
+
+#Theory
+
+* Election manipulation efforts entail principal-agent and coordination problems (Rjundlett and Svolik 2016)
+* Agents weigh costs and benefits
+  + Benefits: Patronage rewards (Hale 2014, Forrat 20xx)
+  + Costs: Risk of exposure and punishment
+  
+* Agents can respond by shirking, or refusing certain kinds of manipulation (Harvey2019)
+
+* Courts that impose penalties increase the risk of exposure and the cost
+
+---
+
+# Hypotheses
+
+* H1: The application of a severe penalty for convicted election manipulators should be associated with reduced election fraud in the court's region in the subsequent election.
+
+
+* H2: The application of a light penalty for convicted election manipulators should be associated with increased election fraud in the court's region in the subsequent election.
+
+---
+
+# Data
+
+* Case decisions scraped from SudAct (sudact.ru), automatically coded by legal code and year
+
+* Hand coded for region, outcome, initiator, target
+  + Current cases only fully coded for 142.1 of the criminal code (falsification of results)
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(here)
+library(tidyverse)
+
+crim_descr <- read_csv(here("Data", "code_descriptions_crim.csv"), col_types = "cc") #Two columns, both character
+admin_descr <- read_csv(here("Data", "code_descriptions_admin.csv"),  col_types = "cc")
+case_metadata <- read.csv(here("Data", "case_metadata_142_1.csv"))
+annual_data <- read.csv(here("annual_data.csv"))
+
+##NOTE: Double-check article 142 cases--none show up on SudAct, yet we have some cases in the data here.
+
+```
+
+```{r allCases, fig.cap="All cases by year", out.width='90%', echo=FALSE}
+ggdraw() + 
+  draw_image("C:/Users/colej/Documents/Research projects/scrape_russian_courts/Plots/all_cases_plot.png", scale = .85, vjust = -0.25)
+#Note to self: Re-do cases for 5.4--some kind of mix-up there--meaning, re-search and download them from sudact
+```
+
+---
+
+# Criminal cases
+
+background-image: url("./libs/img/criminal_plot.png")
+background-position: center
+background-size: contain
+
+
+
+
+---
+
+# Administrative cases
+
+```{r echo=F}
+ggdraw() + 
+  draw_image("C:/Users/colej/Documents/Research projects/scrape_russian_courts/Plots/admin_plot.png", scale = 1.15)
+```
+
