@@ -64,6 +64,14 @@ annual_data <- read.csv(here("annual_data.csv"))
 
 m1 <- lm(deviance_region ~ n_precincts + treated_fine + region + year, data = annual_data)
 summary(m1)
+
+#Exclude deviance outliers
+
+m2 <- lm(deviance_region ~ n_precincts + treated_fine + region + year, data = annual_data %>% filter(deviance_region <=30))
+summary(m2)
+
+p.dag <- ggplot(data = annual_data %>% filter(master_id == 50), aes(x = year, y = deviance_region)) +
+  geom_line()
 ```
 
 

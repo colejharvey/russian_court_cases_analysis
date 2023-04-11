@@ -17,7 +17,7 @@ case_info <- case_info %>% mutate(document_name = paste0("caseid_", caseid))
 
 case_metadata <- read.csv(here("Data", "case_metadata_142_1.csv")) %>% rename(document_name = ï..document_name)
 
-regions_data <- read.xlsx(here::here("Maps", "russia_regions_map_data.xlsx"))
+regions_data <- read_xlsx(here::here("Maps", "russia_regions_map_data.xlsx"))
 ```
 
 

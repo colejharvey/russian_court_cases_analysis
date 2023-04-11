@@ -3,7 +3,7 @@ title: "Election Manipulation Offenses in the Russian Legal System"
 subtitle: " Preliminary Findings"
 author: "Cole J. Harvey"
 institute: "Oklahoma State University"
-date: "2016/12/12 (updated: `r Sys.Date()`)"
+date: "`r Sys.Date()`"
 output:
   xaringan::moon_reader:
     lib_dir: libs
@@ -143,21 +143,182 @@ ggdraw() +
 
 ---
 
-# Criminal cases
 
 background-image: url("./libs/img/criminal_plot.png")
 background-position: center
-background-size: contain
+background-size: 80%
 
+# Criminal cases
 
 
 
 ---
 
+
+background-image: url("./libs/img/admin_plot.png")
+background-position: center
+background-size: 80%
+
 # Administrative cases
 
-```{r echo=F}
-ggdraw() + 
-  draw_image("C:/Users/colej/Documents/Research projects/scrape_russian_courts/Plots/admin_plot.png", scale = 1.15)
+---
+# Fines for conviction under Art. 142.1
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+case_metadata <- read.csv(here("Data", "case_metadata_142_1.csv"))
+
+p.fines <- ggplot(case_metadata, aes(x=(fine_amount)/1000)) +
+  geom_histogram() +
+  xlab("Fine amount (thousands of rubles)") +
+  ylab("Count") +
+  theme_bw()
 ```
+
+```{r fines, message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Distribution of fine amounts"}
+
+
+p.fines
+```
+
+
+---
+
+# Statistical analysis
+
+* OLS regression
+* DV: Deviance from uniform of last-digit zeroes (Skovoroda and Lankina)
+* EV based on sentences:
+  + Major fine (> 50,000 rubles)
+  + Prison time
+  + "Major penalty" = 1 if either of the above = 1 
+  + All take on a positive value only for the subsequent election in that region
+* Controls:
+  * Number of precincts per region
+  * Number of defendants per region-year
+  * Fixed effects by region and year
+* Data:
+  + 176 cases related to alleged falsification of results
+  + Region-level deviance estimated from precinct-level election results (national elections 2011-2021)
+  
+---
+
+# DV: Deviance from uniform of last-digit zeroes
+
+$$Deviance_{0,i} = 2(O_{i0}log(\frac{O_{i0}}{0.1n_{i}}) + (n_{i} - O_{i0})log(\frac{(n_{i} - O_{i0})}{.9n_{i}}))$$
+where, 
+
+* $Deviance_{0,i}$ 
+
+refers to the region-level deviance in last-digit zeroes,
+
+* $O_{i0}$ indicates the total number of zeroes in the region, and
+
+* $n_{i}$ refers to the number of polling places in the region
+
+---
+
+# Results (deviance)
+
+```{r include=FALSE}
+library(here)
+library(tidyverse)
+
+crim_descr <- read_csv(here("Data", "code_descriptions_crim.csv"), col_types = "cc") #Two columns, both character
+admin_descr <- read_csv(here("Data", "code_descriptions_admin.csv"),  col_types = "cc")
+annual_data <- read.csv(here("annual_data.csv"))
+```
+
+
+```{r echo=FALSE}
+annual_data <- annual_data %>% mutate(deviance_region_adj = ifelse(deviance_region == 0, 0.000001, deviance_region)) #One region has a perfect 0 deviance, so cannot take the log without a tweak
+
+
+m1 <- lm(deviance_region ~ n_precincts + treated_fine_large + n_defendants + region + as.factor(year), data = annual_data)
+#summary(m1)
+
+m2 <- lm(log(deviance_region_adj) ~ n_precincts + treated_fine_large + n_defendants + region + as.factor(year), data = annual_data)
+#summary(m2)
+
+```
+
+```{r, echo=FALSE}
+annual_data <- annual_data %>% mutate(major_penalty = ifelse(treated_fine_large == 1 | treated_jail == 1 & amnestied == 0, 1, 0)) 
+annual_data <- annual_data %>% mutate(treated_fine_small = ifelse(treated_fine_any == 1 & treated_fine_large == 0, 1, 0))
+annual_data <- annual_data %>% mutate(minor_penalty = ifelse(treated_fine_small == 1 | amnestied == 1, 1, 0)) 
+
+
+
+
+m3 <- lm(deviance_region ~ n_precincts + treated_fine_large + treated_fine_small +  treated_jail + n_defendants + region + as.factor(year), data = annual_data)
+#summary(m3)
+
+m4 <- lm(log(deviance_region_adj) ~ n_precincts + treated_fine_large + treated_fine_small + treated_jail + n_defendants + region + as.factor(year), data = annual_data)
+#summary(m4)
+
+```
+
+```{r echo=FALSE}
+
+
+m5a <- lm(deviance_region ~ n_precincts +  major_penalty + n_defendants + region  + as.factor(year), data = annual_data)
+#summary(m5a)
+
+m6a <- lm(log(deviance_region_adj) ~ n_precincts +  major_penalty + n_defendants + region + as.factor(year), data = annual_data)
+#summary(m6a)
+
+
+### Minor
+
+
+m5b <- lm(deviance_region ~ n_precincts +  minor_penalty + n_defendants + region  + as.factor(year), data = annual_data)
+#summary(m5b)
+
+m6b <- lm(log(deviance_region_adj) ~ n_precincts +  minor_penalty + n_defendants + region + as.factor(year), data = annual_data)
+#summary(m6b)
+
+
+```
+
+```{r table1, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+stargazer::stargazer(m1, m3, m5a, type ="html", omit = c("region", "year"), title = "OLS models of raw deviance", header = F, single.row = T)
+```
+
+---
+# Results (log deviance)
+
+```{r table2, echo = FALSE, message=FALSE,results='asis'}
+stargazer::stargazer( m2, m4, m6a, type = "html", omit = c("region", "year"), title = "OLS models of log deviance", header = F, model.numbers = F, column.labels =  c("(4)", "(5)", "(6)"), single.row = T)
+```
+
+---
+
+# Anecdotal qualitative evidence
+
+* Organizers, higher-level perpetrators of fraud not held accountable
+  + Only precinct election commissioners
+* Prosecution appears more likely in regional and local elections
+* Motives are usually obscured
+
+"... out of greed and other personal interest, with a view to obtaining additional material payments by giving the [Territorial Election Commission] leadership a favorable impression of her organization and conduct of the elections, to ensure a high voter turnout on the day of his election, and to increase the results of voting for a party to which she is more sympathetic..."
+
+---
+
+# Conclusion
+
+* More work is needed; specifically, more coding
+  + Measurement bias a distinct possibility
+  + Still, results suggest that risk of penalty does damage the machinery of manipulation
+  
+* Criminal justice system continues to operate even in a politically closed environment
+  + Administrative cases appear constrained in Putin's 4th term--why?
+  
+* Clear there is a tension between the good of the system as a whole, and the good of individual agents
+
+--- 
+
+# References
+
+Text
+
 
