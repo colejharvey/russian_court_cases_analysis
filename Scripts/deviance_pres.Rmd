@@ -10,7 +10,7 @@ library(openxlsx)
 library(here)
 library(stringi)
 
-election_full <- read.xlsx(here("Data", "Election_data", "precinct_results_2018.xlsx"))
+election_full <- read.xlsx(here("Data", "Election_data", "precinct_results_2012.xlsx"))
 
 ```
 
@@ -57,6 +57,66 @@ precincts$deviance_region <- 2*(precincts$ur_last0_freq*log(precincts$ur_last0_f
 ```{r}
 write.csv(precincts, here("Data", "region_deviance_2018.csv"))
 ```
+
+
+
+
+## Collecting just for the trail region of Dagestan
+
+```{r}
+election_dagestan <- election_full %>% filter(region == "Республика Дагестан")
+
+election_dagestan <- election_dagestan %>%                                        # Create ID by group
+  group_by(tik) %>%
+  dplyr::mutate(temp_id = cur_group_id())
+
+```
+
+Get number of precincts
+
+```{r}
+precincts <- election_dagestan %>% group_by(temp_id) %>% summarize(n())
+precincts <- precincts %>% rename(n_precincts = `n()`)
+
+
+```
+
+Get frequency of last-digit zeroes
+
+```{r}
+precincts <- precincts %>% add_column(ur_last0_freq = NA)
+precincts <- precincts %>% add_column(tik = NA)
+
+election_dagestan <- election_dagestan %>% mutate(ur_last = putin %% 10) #united_russia for parl elections
+#election_dagestan <- election_dagestan %>% mutate(kprf_last = kprf %% 10)
+
+for (i in 1:nrow(precincts)){
+  election_full_sub <- election_dagestan %>% filter(temp_id == i)
+  temp_table_ur <- table(election_full_sub$ur_last)
+  precincts$ur_last0_freq[i] <- as.numeric(temp_table_ur[1])
+  precincts$tik[i] <- unique(election_full_sub$tik) %>% stri_trans_general(. , 'cyrillic-latin')
+}
+
+```
+
+Getting deviance
+```{r}
+precincts$deviance_tik <- 2*(precincts$ur_last0_freq*log(precincts$ur_last0_freq/(.1*precincts$n_precincts)) +
+                                (precincts$n_precincts - precincts$ur_last0_freq)*log((precincts$n_precincts - precincts$ur_last0_freq)/(.9*precincts$n_precincts)))
+
+print(precincts, n = 54)
+```
+
+
+```{r}
+write.csv(precincts, here("Data", "dagestan_tik_deviance2012.csv"))
+```
+
+20 Kajtagskaâ deviance in 2012: 15.11 (mean 3.31)  19978 voters on the list, 17041 votes for Putin: 85.3%   92.8% relative vote-share for Dagestan as a whole
+
+20 Kajtagskaâ deviance in 2018: 3.47 (mean 1.44)  21298 voters on the list, 18130 votes for Putin 85.12%    90.8% relative for Dagestan as a whole.
+
+While it's not fully convincing--so many years in between--we do see a very large change across the years there.
 
 
 

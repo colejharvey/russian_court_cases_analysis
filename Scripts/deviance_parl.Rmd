@@ -10,7 +10,7 @@ library(openxlsx)
 library(here)
 library(stringi)
 
-election_full <- read.xlsx(here("Data", "Election_data", "precinct_results_2021.xlsx"))
+election_full <- read.xlsx(here("Data", "Election_data", "precinct_results_2016.xlsx"))
 
 ```
 
@@ -77,3 +77,5 @@ p.dag <- ggplot(data = annual_data %>% filter(master_id == 50), aes(x = year, y 
 
 
 Next steps: collect deviance for opposition party too? Figure out best way to connect the collected deviances to the main dataset for this. It may be time to just come up with a new master ID list. But this is tricky because of different spellings for some of the regions across years in the big datasets.
+
+

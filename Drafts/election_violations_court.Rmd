@@ -15,7 +15,7 @@ indent: true
 header-includes: 
   - \usepackage{booktabs}
   - \usepackage{setspace}
-abstract: "Are judicial systems able to hold individuals accountable for election fraud in closed, authoritarian regimes, and if so, does the risk of punishment make it more difficult for ruling parties to manipulate elections? This paper offers preliminary findings from a corpus of over 7,500 court decisions on election-related issues in Russia, from 2010 to 2021. The project is in an early stage, and only the subset of 176 cases related to falsification of results has been comprehensively coded. Still, the broad patterns from the full dataset, and stasitical analysis of the smaller subset, indicate that Russia's judicial system does prosecute electoral misdeeds, and that when individuals receive strong penalties there is a subsequent regional improvement in election quality. The early results are cautiously supportive of the theory that legal risks deter election manipulation by low-level actors."
+abstract: "Are judicial systems able to hold individuals accountable for election fraud in closed, authoritarian regimes, and if so, does the risk of punishment make it more difficult for ruling parties to manipulate elections? This paper offers preliminary findings from a corpus of over 7,500 court decisions on election-related issues in Russia, from 2010 to 2021. The project is in an early stage, and only the subset of 225 cases related to falsification of results has been comprehensively coded, with partial coding for an additional 200 cases related to vote-buying. Still, the broad patterns from the full dataset, and stasitical analysis of the smaller subset, indicate that Russia's judicial system does prosecute electoral misdeeds, and that when individuals receive strong penalties there is a subsequent regional improvement in election quality. The early results are cautiously supportive of the theory that legal risks deter election manipulation by low-level actors."
 zotero: FALSE
 
 ---
@@ -139,7 +139,7 @@ I construct a small number of measures of the severity of a penalty, in an attem
 
 Region-years are considered to have been 'treated' under any of these coding rules if such a sentence was applied in the period prior to a given election. That is, if an individual in Moscow region has been sentenced to a large fine in 2013, Moscow region would be considered treated for the 2016 election, but not the 2012 or 2018 elections. I do not allow 'treatment' to carry beyond the next election on the assumption that once a new election happens, agents will update their understanding of risk based on the presence or absence of any large penalties following the new election. This binary 'treatment' variable based on large fines in the region prior to a given election serves as the main explanatory variable.
 
-The dependent variable for this study is an election-forensic variable adopted from work by @Skovoroda2017, who use a statistical measure of deviance in the distribution of last digits in precinct-level election results to estimate election fraud by region. In particular, I focus here on deviance in the number of precincts where the results for the ruling party (United Russia in legislative elections and Vladimir Putin in presidential ones) end in zero. The deviance formula is $$Deviance_{0,i} = 2(O_{i0}log(\frac{O_{i0}}{0.1n_{i}}) + (n_{i} - O_{i0})log(\frac{(n_{i} - O_{i0})}{.9n_{i}}))$$ where $Deviance_{0,i}$ refers to the region-level deviance in last-digit zeroes, $O_{i0}$ indicates the total number of zeroes in the region, and $n_{i}$ refers to the number of polling places in the region. The deviance variable increases as the number of last-digits zeroes in the region deviates from the expected value of ten percent (zero is one of ten possible values the trailing digit can take). It will be important to control for the number of precincts in the region in the regression models, since increasing the sample size may increase deviance simply due to the increased statistical power of the test [@Skovoroda2017]. In the regression models below, I use both the raw measure of deviance and its log, due to the non-normal distribution of the raw variable. The models are standard OLS models, with two-way fixed effects for election-year and region.
+The dependent variable for this study is an election-forensic variable adopted from work by @Skovoroda2017, who use a statistical measure of deviance in the distribution of last digits in precinct-level election results to estimate election fraud by region. In particular, I focus here on deviance in the number of precincts where the results for the ruling party (United Russia in legislative elections and Vladimir Putin in presidential ones) end in zero. The deviance formula is $$Deviance_{0,i} = 2(O_{i0}log(\frac{O_{i0}}{0.1n_{i}}) + (n_{i} - O_{i0})log(\frac{(n_{i} - O_{i0})}{.9n_{i}}))$$ where $Deviance_{0,i}$ refers to the region-level deviance in last-digit zeroes, $O_{i0}$ indicates the total number of zeroes in the region, and $n_{i}$ refers to the number of polling places in the region. The deviance variable increases as the number of last-digits zeroes in the region deviates from the expected value of ten percent (zero is one of ten possible values the trailing digit can take). It will be important to control for the number of precincts in the region in the regression models, since increasing the sample size may increase deviance simply due to the increased statistical power of the test [@Skovoroda2017]. In the regression models below, I use both the raw measure of deviance and its log, due to the non-normal distribution of the raw variable. The models are standard OLS models, with two-way fixed effects for election-year and region. This adjusts for any time-invariant confounders by region (such as each region's status as an ordinary region or an often less-competitive titular republic), as well as for nationwide shifts in political competitiveness over time.
 
 ```{r echo=FALSE}
 annual_data <- annual_data %>% mutate(deviance_region_adj = ifelse(deviance_region == 0, 0.000001, deviance_region)) #One region has a perfect 0 deviance, so cannot take the log without a tweak
@@ -152,6 +152,7 @@ m2 <- lm(log(deviance_region_adj) ~ n_precincts + treated_fine_large_fraud + n_d
 #summary(m2)
 
 ```
+
 
 ```{r, echo=FALSE}
 annual_data <- annual_data %>% mutate(major_penalty = ifelse(treated_fine_large_fraud == 1 | treated_jail_fraud == 1 & amnestied == 0, 1, 0)) 
@@ -244,14 +245,15 @@ modelsummary::modelsummary(models, coef_omit = "region", stars = T, gof_omit = "
                              "as.factor(year)2016" =  "2016",
                              "as.factor(year)2018" = "2018",
                              "as.factor(year)2020" = "2020",
-                             "as.factor(year)2021" = "2021")
+                             "as.factor(year)2021" = "2021"),
+                           title = "OLS models of last-digit deviance with country-fixed effects"
                            )
 ```
 
 
 
 
-The results in Table 3 should be interpreted cautiously, however, since the non-normal distribution of the raw dependent variables makes the models susceptible to the influence of outliers. In particular, the Dagestani case is highly influential, as it exhibits extremely high levels of deviance in some years and is one of the 'treated' regions. Transforming the dependent variable by taking its logarithm allows for a more normal distribution better suited linear regression models. Table 4 presents these results, which are more muted. In these models, small fines do not show a statistically significant relationship with subsequent fraud. Large fines retain their negative coefficient, but the effect size is far smaller and not statistically significant. In these models, however, prison sentences have a significant and negative effect. The size of the effect of a prison sentence in Model 5 is substantively significant, at roughly ninety percent the size of one standard deviation of the logged dependent variable. The coefficient for major penalties, while negative, is not statistically significant at the conventional level.
+The results in Table 3 should be interpreted cautiously, however, since the non-normal distribution of the raw dependent variables makes the models susceptible to the influence of outliers. In particular, the Dagestani case is highly influential, as it exhibits extremely high levels of deviance in some years and is one of the 'treated' regions. Transforming the dependent variable by taking its logarithm allows for a more normal distribution better suited linear regression models. Table 4 presents these results, which are more muted. In these models, small fines do not show a statistically significant relationship with subsequent fraud. Large fines retain their negative coefficient, but the effect size is far smaller and not statistically significant. In these models, however, prison sentences have a significant and negative effect. The size of the effect of a prison sentence in Model 5 is substantively significant, at roughly the size of one standard deviation of the logged dependent variable. The coefficient for major penalties, while negative, is not statistically significant at the conventional level.
 
 Lastly, the placebo tests in Models 4 and 8 indicate that the significant findings in the other models can be interpreted with greater confidence. As expected, convictions and fines for vote-buying offenses appear to have no correlation with subsequent election fraud. This suggests that only convictions related to falsification influence future fraud, helping support the theory of deterrence outlined here.
 
@@ -276,12 +278,82 @@ modelsummary::modelsummary(models, coef_omit = "region", stars = T, gof_omit = "
                              "as.factor(year)2016" =  "2016",
                              "as.factor(year)2018" = "2018",
                              "as.factor(year)2020" = "2020",
-                             "as.factor(year)2021" = "2021"))
+                             "as.factor(year)2021" = "2021"),
+                           title = "OLS models of logged last-digit deviance with country-fixed effects")
 
 ```
 
 
 \newpage
+
+# The case of Dagestan
+
+Dagestan in an influential case in the statistical analysis, but is this influence a statistical anomaly or is it plausibly a result of the causal process considered here? While the evidence is circumstantial, a close reading of the relevant court cases and an examination of the district involved are broadly supportive of the theory. Dagestan reports a very large change in its overall deviance from the expected last-digit distribution between the 2016 parliamentary election and the 2018 presidential election: from 49.6 to 9.2.^[This is still quite high\textemdash the average deviance across the whole dataset is 1.5.] In between those elections, a precinct election commission chairman (who is unnamed in the court documents) was convicted of falsifying election returns in his precinct by a district court and sentenced to a large fine\textemdash 200,000 rubles. This is a very substantial sentence in a region where the average monthly salary in 2017 was under 18,000 rubles.^[Data taken from the Russian State Statistical Service's data portal at https://showdata.gks.ru/finder/.] After being convicted by the district court, the precinct chairman twice appealed his case to the Supreme Court of Dagestan, which upheld his conviction and sentence in both cases.
+
+Dagestan is one of Russia's 21 titular republics, regions which nominally hold significant autonomy from the center due to historical legacies of ethnic politics, but in practice are tightly integrated under the Kremlin's 'power vertical' [@white_ethnic_2017]. As a titular republic in the Caucasus region, Dagestan is often considered together with highly centralized regions like neighboring Chechnya and Ingushetia, and while all these regions typically deliver overwhelming victories for the ruling party in national elections, their internal politics are quite different. Where Chechnya, for example, is a relatively homogenous region that has been ruled as a near personal fiefdom under Ramzan Kadyrov [@tolstrup_souleimanov_2022], Dagestan is extremely ethnically diverse and politically more pluralist. Dagestan is home to more than thirty officially recognized ethnic groups; about thirty percent of the population belong to the largest single ethnic group, the Avars. Ethnic Dargins, the second largest group, account for another sixteen percent of the population, follow by Kumiks (15.6%) and Lezgins (13.1%). Numerous, smaller ethnic groups account for the remaining quarter of the population.^[Ethnic data taken from the 2020 Russian census: https://rosstat.gov.ru/vpn/2020 .] This complex social environment is further complicated by the region's mountainous terrain, which contributes to geographic fragmentation among these ethnic groups. 
+
+Dagestanis have managed this complexity, both in pre- and post-Soviet times, in part through the institution of the *djamaat*:  a community of historically connected villages which is headed by a council of local elders drawn from the various extended family groupings in the area. The djamaat forms the foundation of a consociational-style form of government, in which djamaat leaders exercise authority within their communities, resolve cross-community disputes, and  form political alliances with out-group leaders. This structure was the informal basis for Dagestan's first post-Soviet constitution, which had explicit consociational features [@ware_ethnic_dagestan]. This consociational system was dismantled through constitutional reforms at the behest of the Putin government, along with its ethnicity-based regional parties. Local elites now depend on the federal state for their political survival and to accomplish their aims, rather than on consociational bargaining [@ware2014dagestan]. United Russia is the dominant regional political party, typically capturing three-quarters of the vote in regional elections. As a result, much intra- and inter-ethnic competition is  relegated to behind-the-scenes conflicts to win the right to represent United Russia (or the state more broadly) from higher level authorities [@kapustina2016municipal;@ware_dagestan_elections]. 
+
+Case number 1-35/2017 of the Kaytagskii district court, decided on September 4, 2017, took place in this context of behind-the-scenes competition. The names of all the figures in the case are redacted, which makes a precise accounting of the events difficult to reconstruct, but the general contours are these. During the 2016 election for the Dagestan regional legislature, the defendant served as chairman of a precinct election commission. The regional branch of the state prosecutor brought charges of falsification against the chairman on behalf of a losing candidate in that election. The court found the following facts to be true. First, three members of the five-member commission were not present on election day, yet when the election protocol was submitted to the territorial election commission, all five signatures were present. An expert handwriting analyst claimed that the three missing members' signatures were forged by the precinct chairman. The analyst testified that the person who wrote the words for the vote totals (i.e. "ninety-five") was someone other than the precinct chair, and the person who wrote the numerals for the results (i.e. "95") could not be determined. An examination of the ballots from the precinct showed that the vote totals had been altered, with United Russia's vote-total being inflated by forty-eight votes. Finally, the court found that the facility where the territorial election commission was tabulating precinct protocols had been secured by the police, and that only TEC members at other authorized personnel were present.
+
+The court found that since the precinct chair was the responsible individual for submitting correct results to the TEC, and since the evidence suggested he had forged the other members' signatures, that he was guilty of falsifying the return. His motives for doing so were "of no legal consequence." Reading between the lines, however, suggests a not-uncommon sequence of events: the precinct chair forged the other members' signatures so that the protocol would be valid, but left the results blank when submitting it to the TEC. The TEC, upon collecting multiple blank (but signed) protocols, is then able to allocated whatever results are needed across various precincts to ensure the desired outcome in the election the area under their purview. The defendant in fact argues this point in his appeal, according to the court's conclusion, saying that:
+
+> ...by giving false instructions, the members of the territorial election commission, headed by the chairman, contributed to the very possibility of falsification and forgery of documents... According to the testimony of the victim Radzhabov M.R. the elections were falsified in 30 polling stations, so falsification of this scale could not have been committed if the members of the territorial election commission had accepted the protocols from the PECs in accordance with the legislative procedure.^[Appeal Resolution No. 22-22/2020 22-2609/2019 of the Supreme Court of the Republic of Dagestan.]
+
+Neither the district court nor the high court appear interested in pursuing this line of investigation. Even when laying out the facts of the case which clearly comport with this version of events\textemdash in which the real forgery is completed by the TEC\textemdash these higher-level functionaries are protected by the court. There is no curiosity about their role in the case. When questioned at a hearing, the members of the TEC "could not explain any significant information about the circumstances of the incident, saying that basically, on voting day, [they] dealt with the organization of elections, advising the PEC chairmen, and resolving urgent issues. As a consequence, none of them accepted the PEC voting results protocols."^[Sentence No. 1-35/2017 dated September 4, 2017 in case No. 1-35/2017, Kaitagskii District Court.] The court does not, so far as the record shows, inquire further about this peculiarity.
+
+The actions of the precinct chairman in this case resulted in the addition of a few dozen votes to United Russia, inflating the ruling party's vote total from forty-seven to ninety-five. This is far from enough to be decisive in the outcome of even a regional legislative election. So what accounts for this case being brought to trial? The 'victim' in this case was a high-ranking regime insider from the Communist Party of the Russian Federation (KPRF). The KPRF is part of Russia's so-called systemic opposition; while it takes opposition positions from time to time and can be locally active in opposition in some areas, it has largely been co-opted into a 'loyal' opposition through the distribution of offices and rents to its leadership. The victim in question was a member of the Republican legislature in the previous two convocations, and was a candidate in the election at hand. He was a member of the Public Council of the Republic of Dagestan\textemdash a consultative, para-state organization that links social groups with regional and federal level authorities. The alleged victim is, as a result, an influential member of the elite.
+
+The defendant's conviction and sentence was appealed to the republican Supreme Court. The high court, in agreement with the state prosecutor, upheld both. While we cannot know the precise motive which led the KPRF lawmaker to file his complaint, winning office does not seem to be the motive. The particular case involves a small number of votes. A personal grudge or community-level dispute could be at work. But it is also possible that the case outcome sprang from a bargaining failure between the ruling party and the co-opted opposition, in which the ruling party overstepped whatever tacit agreement exists about the distribution of resources in the legislature. It is perhaps worth noting that in the previous regional legislative election, United Russia won 62 out of 90 seats; in the 2016 election which figures in the court case, it won 72. So it is at least plausible that KPRF elites in Dagestan utilized the court system to penalize a United Russia agent for engaging in excessive fraud. Doing so sends a message to other precinct election workers that they cannot count on being protected the way that TEC members are. Dagestan is a plausible region for these events to occur; it is a high-fraud region dominated at the regional level by United Russia, but these features are undergirded by local diversity and elite pluralism. These are ripe conditions for legal mobilization against election fraud.
+
+Comparing the estimated deviance in Kaitagskii district between 2012 and 2018 (the presidential elections before and after the sentencing of the precinct chair) shows that precinct-level deviance for last-digit zero declined considerably: from 15.11 to 3.47. This reduction in estimated fraud, a decline of 13.8, is the third largest in Dagestan. In fact, the average change by district is an *increase* in deviance of 0.48. Three of the four rural regions that adjoin Kaitagskii district also saw relative declines in deviance. An urban district, Derbentskii, saw a large increase in deviance. 
+
+Figure \@ref(fig:fig-map) shows a map of Dagestan with its administrative divisions. The districts on the map have been divided into three bins based on the size and direction of the change in last-digit deviance between the two presidential elections. The variable has been centered and scaled for easier visualization. Large negative changes (the bottom quartile) have been coded in light red; large positive changes (the upper quartile) have been coded in dark blue. Changes in the middle of the distribution, close to zero, have been coded in light blue. Kaytagskii district, where the court case was first heard, has been marked with a solid triangle. As the map illustrates, some of the largest declines in estimated fraud occur in neighboring rural, mountainous districts. The neighboring dark blue regions, where fraud seemingly increased substantially, are qualitatively different\textemdash coastal, more urban, and home to different ethnic groups. This is consistent with a version of events in which a 'signal' about the cost of committing fraud is received by front-line election workers within a similar milieu and similar social networks as the defendant in the court case.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+library(sf)
+library(ggplot2)
+library(rgdal)
+library(rgeos)
+library(ggrepel)
+
+#Reading the shapefiles
+sf <- st_read(dsn= here("Maps", "RUS_adm"), layer="RUS_adm2") %>% dplyr::filter(NAME_1 == "Dagestan")
+shape <- readOGR(dsn=here("Maps", "RUS_adm"), layer="RUS_adm2")  
+shape <- subset(shape, NAME_1 == "Dagestan")
+
+## Read in deviance diffs and merge with sf
+
+deviance_diffs <- read.csv(here("Data", "dagestan_deviance_diffs_mapcodes.csv")) %>% dplyr::select(ID_2, deviance_diff)
+
+sf <- sf %>% left_join(deviance_diffs, by = "ID_2")
+sf <- sf %>% mutate(scale_deviance_diff = scale(deviance_diff))
+
+## Creating a border
+sf <- sf %>%
+ mutate(
+    outline = case_when(
+      NAME_2 == "Kaytagskiy rayon" ~ "blue",
+            TRUE ~ "white"),
+    size = ifelse(outline == "white", 0.5, 3)
+  )
+
+```
+
+```{r fig-map, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Dagestan: Change in estimated fraud by administrative division (2012-2018)"}
+ggplot(sf) + 
+  geom_sf(aes(fill = scale_deviance_diff))  +  scale_fill_steps2(low = "red", mid = "lightblue", high = "darkblue", breaks = c(-.08, .06)) +
+  geom_point(x = 47.87, y = 42.1, shape = 17) + 
+  labs(fill = "Binned difference in last-digit deviance\n (centered and scaled)") +
+  theme_bw() + theme(axis.text.x=element_blank(), #remove x axis labels
+        axis.ticks.x=element_blank(), #remove x axis ticks
+        axis.text.y=element_blank(),  #remove y axis labels
+        axis.ticks.y=element_blank()  #remove y axis ticks
+        )
+
+#Note: scale_fill_steps2 will produce a smoother, but less clear, gradient (no breaks)
+```
+
 
 
 # Discussion and conclusion

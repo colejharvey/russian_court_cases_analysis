@@ -9,7 +9,7 @@ library(tidyverse)
 library(here)
 library(readxl)
 
-cases <- read_xlsx(here("Data", "Lawcode_142_1.xlsx"))
+cases <- read_xlsx(here("Data", "142", "Lawcode 142.xlsx"))
 cases <- cases %>% rename(document_name = "Document Name")
 
 case_info <- read_rds(here("Data", "combined_dataset.RDS")) %>% select(-decision.text)
@@ -23,7 +23,7 @@ regions_data <- read_xlsx(here::here("Maps", "russia_regions_map_data.xlsx"))
 
 ```{r}
 grouped_cases <- cases %>% select(!(MediaType:EX)) 
-grouped_cases <- grouped_cases %>% group_by(document_name) %>%  summarise(across("Case law: Civil":"Type: First instance", sum))
+grouped_cases <- grouped_cases %>% group_by(document_name) %>%  summarise(across("Case law: Administrative":"Type: Appeals", sum))
 ```
 
 Making regions into column data rather than row
@@ -55,6 +55,17 @@ Cleaning some variables so that any code greater than 1 equals 1.
 ```{r}
 grouped_cases2 <- grouped_cases2 %>% mutate(across("Case law: Civil":"Type: First instance", ~ifelse(.x >= 1, 1, 0)))
 ```
+
+
+
+
+## Writing
+```{r}
+write.csv(grouped_cases2, here("Data", "142", "Lawcode_142_codes.csv"))
+```
+
+
+## Further analysis
 
 Merging with metadata
 
